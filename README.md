@@ -114,3 +114,5 @@ Kod tego narzędzia jest udostępniany na licencji **MIT**.
 MeshCore jest oddzielnym projektem i pozostaje objęty własną licencją i prawami autorskimi jego autorów.
 
 Ten projekt jest nieoficjalnym narzędziem i nie jest oficjalnym produktem MeshCore ani Seeed Studio.
+
+<img width="628" height="459" alt="Zrzut ekranu 2026-08-16 160828" src="https://github.com/user-attachments/assets/427ff65f-f973-4142-a447-295b9d4c27f7" />
