@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+build/
+dist/
+*.spec
+*.log
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+*.uf2
+*.hex
+*.elf
