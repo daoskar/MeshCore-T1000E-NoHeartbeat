@@ -55,10 +55,8 @@ Wersje draft i prerelease są pomijane.
 
 ## Windows EXE
 
-Gotowy plik `.exe` najlepiej udostępniać w sekcji **Releases**, np.:
-
-```text
-MeshCore-T1000E-NoHeartbeat-Builder.exe
+Gotowy plik exe do uruchomienia. 
+MeshCore-T1000E-NoHeartbeat-Builder
 ```
 
 ## Uruchamianie wersji Python
