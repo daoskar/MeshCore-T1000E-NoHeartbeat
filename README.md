@@ -1,116 +1,98 @@
 # MeshCore T1000-E No-Heartbeat Builder
 
-Nieoficjalne narzędzie dla **Seeed Studio SenseCAP T1000-E**, które automatycznie pobiera najnowszy stabilny firmware **MeshCore Companion**, modyfikuje obsługę diody statusowej i buduje gotowy plik `.uf2`.
+[![Platform](https://img.shields.io/badge/platform-Windows-blue)](https://github.com/daoskar/MeshCore-T1000E-NoHeartbeat/releases)
+[![Device](https://img.shields.io/badge/device-SenseCAP%20T1000--E-green)](https://www.seeedstudio.com/SenseCAP-Card-Tracker-T1000-E-for-LoRaWAN-p-6408.html)
+[![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
-Głównym celem projektu jest wyłączenie regularnego migania diody heartbeat bez ręcznej edycji kodu w VS Code / PlatformIO.
+Proste narzędzie dla **Seeed Studio SenseCAP T1000-E**, które automatycznie pobiera najnowszy stabilny **MeshCore Companion**, wyłącza regularny heartbeat zielonej diody i buduje gotowy firmware `.uf2`.
 
-> **Projekt społecznościowy / nieoficjalny.**  
-> Nie jest powiązany ani oficjalnie wspierany przez MeshCore ani Seeed Studio.
+Nie trzeba ręcznie edytować `UITask.cpp`, instalować VS Code ani konfigurować projektu PlatformIO.
 
-## Funkcje
+<p align="center">
+  <img width="628" alt="MeshCore T1000-E No-Heartbeat Builder" src="https://github.com/user-attachments/assets/427ff65f-f973-4142-a447-295b9d4c27f7" />
+</p>
 
-- automatyczne wykrywanie najnowszego stabilnego release MeshCore Companion,
-- pobieranie źródeł bezpośrednio z oficjalnego repozytorium MeshCore,
-- budowanie firmware dla `t1000e_companion_radio_ble`,
-- Windows GUI,
-- automatyczna instalacja PlatformIO, jeśli jest potrzebne,
-- generowanie gotowego `.uf2`,
-- zapis pełnego logu kompilacji,
-- opcjonalne wykrywanie T1000-E w trybie UF2/DFU,
-- ukryta konsola zamiast wielu wyskakujących okien CMD,
-- bezpieczny patch: jeśli struktura kodu w przyszłej wersji MeshCore się zmieni, builder zatrzymuje się zamiast modyfikować przypadkowe miejsce.
+## Pobieranie
+
+Najprostsza opcja dla Windows:
+
+**[➡️ Pobierz najnowszą wersję z GitHub Releases](https://github.com/daoskar/MeshCore-T1000E-NoHeartbeat/releases/latest)**
+
+Uruchom plik `.exe` z sekcji **Assets**.
+
+Kod źródłowy aplikacji znajduje się również w tym repozytorium.
+
+## Co robi program?
+
+- sprawdza najnowszy stabilny release **MeshCore Companion**,
+- pobiera oficjalne źródła MeshCore z GitHuba,
+- modyfikuje wyłącznie logikę diody statusowej T1000-E,
+- automatycznie przygotowuje PlatformIO,
+- kompiluje `t1000e_companion_radio_ble`,
+- generuje gotowy plik `.uf2`,
+- opcjonalnie wykrywa T1000-E w trybie UF2/DFU i kopiuje firmware na urządzenie.
+
+Builder nie jest przypięty do jednej konkretnej wersji MeshCore. Przy każdym buildzie wybiera najnowszy stabilny tag `companion-vX.Y.Z`. Wersje draft i prerelease są pomijane.
 
 ## Tryby LED
 
 ### Heartbeat OFF — zalecane
 
-Regularny heartbeat jest wyłączony, gdy nie ma nieprzeczytanych wiadomości. Oryginalne krótkie powiadomienie LED dla nieprzeczytanej wiadomości pozostaje aktywne.
+Wyłącza regularne miganie diody, gdy nie ma nieprzeczytanych wiadomości.
 
-W uproszczeniu builder dodaje:
-
-```cpp
-if (_msgcount <= 0) {
-    digitalWrite(PIN_STATUS_LED, !LED_STATE_ON);
-    return;
-}
-```
+**Powiadomienie LED o nieprzeczytanej wiadomości pozostaje aktywne.**
 
 ### Heartbeat co około 6 min 40 s
 
-Zmienia `LED_CYCLE_MILLIS` z `4000` na `400000`.
+Nie wyłącza heartbeat całkowicie, tylko zwiększa jego interwał z `4000 ms` do `400000 ms`.
 
 ### Status LED całkowicie OFF
 
-Wyłącza diodę statusową w aplikacji również dla powiadomień o nieprzeczytanych wiadomościach.
+Wyłącza diodę statusową również dla powiadomień o nieprzeczytanych wiadomościach.
 
-## Najnowszy firmware MeshCore
+## Jak używać
 
-Builder nie jest przypięty do jednej konkretnej wersji. Przed każdym buildem sprawdza oficjalne GitHub Releases i wybiera najwyższy stabilny tag:
+1. Pobierz i uruchom najnowszy plik `.exe` z **Releases**.
+2. Wybierz tryb LED.
+3. Wskaż katalog, w którym ma zostać zapisany firmware.
+4. Kliknij **POBIERZ + PATCHUJ + ZBUDUJ UF2**.
+5. Po zakończeniu otrzymasz gotowy plik `.uf2`.
+6. Przełącz T1000-E w tryb UF2/DFU i wgraj wygenerowany firmware.
 
-```text
-companion-vX.Y.Z
-```
+Pierwsze uruchomienie buildu może wymagać pobrania PlatformIO, toolchaina i bibliotek. Program wykonuje to automatycznie i wymaga połączenia z Internetem.
 
-Wersje draft i prerelease są pomijane.
+## Bezpieczne patchowanie
 
-## Windows EXE
+Program nie przekierowuje diody na przypadkowy GPIO. Zamiast tego modyfikuje właściwą obsługę `PIN_STATUS_LED` w źródłach MeshCore.
 
-Gotowy plik exe do uruchomienia. 
-MeshCore-T1000E-NoHeartbeat-Builder
-```
+Jeżeli przyszła wersja MeshCore zmieni strukturę kodu i builder nie będzie w stanie bezpiecznie rozpoznać obsługi LED, operacja zostanie zatrzymana zamiast wykonywać niepewną modyfikację.
 
-## Uruchamianie wersji Python
+## Problemy i log kompilacji
 
-Wymagania:
-
-- Windows,
-- Python 3,
-- połączenie z Internetem.
-
-Uruchom:
-
-```text
-MeshCore_T1000E_Latest_NoHeartbeat_Builder_v3.0.pyw
-```
-
-## Pliki robocze
-
-Domyślnie:
-
-```text
-%LOCALAPPDATA%\MeshCoreNoHeartbeatBuilder
-```
-
-Log ostatniego buildu:
+Pełny log ostatniego buildu znajduje się w:
 
 ```text
 %LOCALAPPDATA%\MeshCoreNoHeartbeatBuilder\build-last.log
 ```
 
+W aplikacji można go również otworzyć przyciskiem **Otwórz build-last.log**.
+
+Jeżeli build się nie powiedzie, do zgłoszenia problemu najlepiej dołączyć końcową część tego pliku.
+
 ## Ważne
 
-Projekt nie próbuje wyłączać LED przez przypisanie przypadkowego GPIO. Inne piny T1000-E mogą być wykorzystywane przez GPS lub pozostałe elementy sprzętu.
+To jest **nieoficjalne narzędzie społecznościowe**. Projekt nie jest powiązany ani oficjalnie wspierany przez MeshCore lub Seeed Studio.
 
-## Flashowanie
-
-Po utworzeniu `.uf2` przełącz T1000-E w tryb UF2/DFU i skopiuj wygenerowany firmware na dysk urządzenia. Builder może również automatycznie wykryć urządzenie po `INFO_UF2.TXT`.
-
-## Bezpieczeństwo
-
-Firmware jest kompilowany ze źródeł oficjalnego projektu MeshCore, ale z lokalną modyfikacją logiki LED. Flaszowanie niestandardowego firmware zawsze wiąże się z pewnym ryzykiem. Zachowaj kopię oficjalnego firmware.
+Firmware jest budowany z oficjalnych źródeł MeshCore z lokalną modyfikacją logiki LED. Wgrywanie niestandardowego firmware wykonujesz na własną odpowiedzialność. Warto zachować oficjalny firmware, aby móc łatwo wrócić do wersji fabrycznej/oficjalnej.
 
 ## Podziękowania
 
-- **MeshCore** — https://github.com/meshcore-dev/MeshCore
-- **Seeed Studio SenseCAP T1000-E**
-- społeczność MeshCore.
+- [MeshCore](https://github.com/meshcore-dev/MeshCore) — firmware i projekt upstream
+- [Seeed Studio](https://www.seeedstudio.com/) — SenseCAP T1000-E
+- społeczność MeshCore za informacje dotyczące heartbeat LED
 
 ## Licencja
 
-Kod tego narzędzia jest udostępniany na licencji **MIT**.
+Kod tego narzędzia jest udostępniany na licencji [MIT](LICENSE).
 
-MeshCore jest oddzielnym projektem i pozostaje objęty własną licencją i prawami autorskimi jego autorów.
-
-Ten projekt jest nieoficjalnym narzędziem i nie jest oficjalnym produktem MeshCore ani Seeed Studio.
-
-<img width="628" height="459" alt="Zrzut ekranu 2026-08-16 160828" src="https://github.com/user-attachments/assets/427ff65f-f973-4142-a447-295b9d4c27f7" />
+MeshCore jest oddzielnym projektem i pozostaje objęty własną licencją oraz prawami autorskimi jego autorów.
