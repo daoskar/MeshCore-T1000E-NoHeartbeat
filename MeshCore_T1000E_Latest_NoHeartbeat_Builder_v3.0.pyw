@@ -54,6 +54,7 @@ GITHUB_API_RELEASES = f"https://api.github.com/repos/{GITHUB_REPO}/releases?per_
 GITHUB_USER_AGENT = "MeshCore-T1000E-Latest-NoHeartbeat-Builder/3.1"
 
 ENV_NAME = "t1000e_companion_radio_ble"
+MAX_CONTACTS = 500
 
 WORK_ROOT = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "MeshCoreNoHeartbeatBuilder"
 BUILD_LOG = WORK_ROOT / "build-last.log"
