@@ -457,13 +457,15 @@ def patch_source(src_dir: Path, release: ReleaseInfo, mode: str, on_line):
     contacts_ini = patch_max_contacts(src_dir, MAX_CONTACTS, on_line)
     patched.append(contacts_ini.relative_to(src_dir))
 
+    on_line(f"✓ Environment: {ENV_NAME}; MAX_CONTACTS={MAX_CONTACTS}")
+
     (src_dir / "CUSTOM_T1000E_NO_HEARTBEAT.txt").write_text(
         f"MeshCore release: {release.tag}\n"
         f"Release date: {release.published_at}\n"
         f"Environment: {ENV_NAME}\n"
         f"Mode: {mode}\n"
-        f"MAX_CONTACTS: {MAX_CONTACTS}\\n"
-        "Builder: v3.1 latest-release\\n"
+        f"MAX_CONTACTS: {MAX_CONTACTS}\n"
+        "Builder: v3.1 latest-release\n"
         f"Patched files: {', '.join(map(str, patched))}\n",
         encoding="utf-8",
     )
