@@ -378,6 +378,7 @@ def patch_one_ui_file(path: Path, mode: str, on_line) -> bool:
     return True
 
 
+
 def patch_max_contacts(src_dir: Path, max_contacts: int, on_line) -> Path:
     """
     Patch only the T1000-E Companion BLE environment.
@@ -389,7 +390,7 @@ def patch_max_contacts(src_dir: Path, max_contacts: int, on_line) -> Path:
 
     text = ini_path.read_text(encoding="utf-8")
     env_re = re.compile(
-        rf"(^\\[env:{re.escape(ENV_NAME)}\\]\\s*$)(.*?)(?=^\\[env:|\\Z)",
+        rf"(^\[env:{re.escape(ENV_NAME)}\]\s*$)(.*?)(?=^\[env:|\Z)",
         re.MULTILINE | re.DOTALL,
     )
     m = env_re.search(text)
@@ -400,8 +401,8 @@ def patch_max_contacts(src_dir: Path, max_contacts: int, on_line) -> Path:
 
     block = m.group(0)
     patched_block, count = re.subn(
-        r"(-D\\s+MAX_CONTACTS=)\\d+",
-        rf"\\g<1>{max_contacts}",
+        r"(-D\s+MAX_CONTACTS=)\d+",
+        lambda match: f"{match.group(1)}{max_contacts}",
         block,
         count=1,
     )
@@ -411,7 +412,7 @@ def patch_max_contacts(src_dir: Path, max_contacts: int, on_line) -> Path:
         )
 
     new_text = text[:m.start()] + patched_block + text[m.end():]
-    ini_path.write_text(new_text, encoding="utf-8", newline="\\n")
+    ini_path.write_text(new_text, encoding="utf-8", newline="\n")
     on_line(f"✓ MAX_CONTACTS ustawiono na {max_contacts} dla {ENV_NAME}")
     return ini_path
 
@@ -453,7 +454,7 @@ def patch_source(src_dir: Path, release: ReleaseInfo, mode: str, on_line):
             f"Najnowszy release nie ma środowiska {ENV_NAME}; nazwa targetu mogła się zmienić."
         )
 
-    on_line(f"✓ Environment: {ENV_NAME}")
+    contacts_ini = patch_max_contacts(src_dir, MAX_CONTACTS, on_line)\n    patched.append(contacts_ini.relative_to(src_dir))\n\n    on_line(f"✓ Environment: {ENV_NAME}")
     (src_dir / "CUSTOM_T1000E_NO_HEARTBEAT.txt").write_text(
         f"MeshCore release: {release.tag}\n"
         f"Release date: {release.published_at}\n"
