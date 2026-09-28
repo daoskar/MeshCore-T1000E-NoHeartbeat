@@ -72,21 +72,49 @@ MODE_LED_OFF = "led_off"
 class BuildError(RuntimeError):
     pass
 
-def console_python() -> str:
+def console_python_cmd() -> list[str] | None:
     """
-    .pyw is normally launched by pythonw.exe. For PlatformIO we deliberately
-    use python.exe inside one hidden console. Toolchain child processes then
-    inherit that hidden console instead of opening dozens of visible CMD windows.
+    Return a real system Python command for PlatformIO.
+
+    Important for the PyInstaller EXE: sys.executable points to this builder EXE,
+    so using sys.executable there would recursively launch another GUI instance.
     """
     exe = Path(sys.executable)
-    if os.name == "nt" and exe.name.lower() == "pythonw.exe":
-        candidate = exe.with_name("python.exe")
-        if candidate.is_file():
-            return str(candidate)
-    return str(exe)
+
+    if not getattr(sys, "frozen", False):
+        if os.name == "nt" and exe.name.lower() == "pythonw.exe":
+            candidate = exe.with_name("python.exe")
+            if candidate.is_file():
+                return [str(candidate)]
+        return [str(exe)]
+
+    # Frozen/PyInstaller build: never use sys.executable (it is this EXE).
+    python = shutil.which("python.exe") or shutil.which("python")
+    if python:
+        try:
+            if Path(python).resolve() != exe.resolve():
+                return [python]
+        except OSError:
+            return [python]
+
+    launcher = shutil.which("py.exe") or shutil.which("py")
+    if launcher:
+        return [launcher, "-3"]
+
+    return None
 
 
-PYTHON_CONSOLE = console_python()
+PYTHON_CMD = console_python_cmd()
+
+
+def require_python_cmd() -> list[str]:
+    if PYTHON_CMD:
+        return list(PYTHON_CMD)
+    raise BuildError(
+        "Nie znaleziono systemowego Pythona. Builder EXE potrzebuje Python 3 "
+        "do uruchomienia PlatformIO. Zainstaluj Python 3 z python.org "
+        "(z opcją 'Add Python to PATH') albo uruchom wersję .pyw."
+    )
 
 
 @dataclass(frozen=True)
@@ -252,7 +280,7 @@ def platformio_available() -> bool:
             kwargs["startupinfo"] = si
             kwargs["creationflags"] = subprocess.CREATE_NEW_CONSOLE
         cp = subprocess.run(
-            [PYTHON_CONSOLE, "-m", "platformio", "--version"],
+            [*require_python_cmd(), "-m", "platformio", "--version"],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -480,7 +508,7 @@ def install_platformio(on_line):
     on_line("PlatformIO Core nie jest zainstalowany.")
     on_line("Instaluję PlatformIO przez pip dla bieżącego Pythona...")
     run_process(
-        [PYTHON_CONSOLE, "-m", "pip", "install", "--user", "--upgrade", "platformio"],
+        [*require_python_cmd(), "-m", "pip", "install", "--user", "--upgrade", "platformio"],
         Path.home(),
         on_line,
         BUILD_LOG,
@@ -510,7 +538,7 @@ def build_firmware(src_dir: Path, on_line) -> Path:
         pass
 
     on_line(f"GUI Python: {sys.executable}")
-    on_line(f"PlatformIO Python (ukryta konsola): {PYTHON_CONSOLE}")
+    on_line("PlatformIO Python: " + " ".join(require_python_cmd()))
 
     try:
         kwargs = {}
@@ -521,7 +549,7 @@ def build_firmware(src_dir: Path, on_line) -> Path:
             kwargs["startupinfo"] = si
             kwargs["creationflags"] = subprocess.CREATE_NEW_CONSOLE
         cp = subprocess.run(
-            [PYTHON_CONSOLE, "-m", "platformio", "--version"],
+            [*require_python_cmd(), "-m", "platformio", "--version"],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -542,7 +570,7 @@ def build_firmware(src_dir: Path, on_line) -> Path:
     try:
         run_process(
             [
-                PYTHON_CONSOLE, "-m", "platformio",
+                *require_python_cmd(), "-m", "platformio",
                 "run", "-e", ENV_NAME, "-t", "create_uf2"
             ],
             src_dir,
@@ -573,7 +601,7 @@ def build_firmware(src_dir: Path, on_line) -> Path:
 
         run_process(
             [
-                PYTHON_CONSOLE,
+                *require_python_cmd(),
                 str(uf2conv),
                 "-f", "0xADA52840",
                 "-c", str(firmware_hex),
