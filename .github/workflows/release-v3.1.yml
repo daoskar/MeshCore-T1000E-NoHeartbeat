@@ -1,0 +1,72 @@
+name: Build and release v3.1
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "MeshCore_T1000E_Latest_NoHeartbeat_Builder_v3.1.pyw"
+      - ".github/workflows/release-v3.1.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyInstaller
+        shell: pwsh
+        run: python -m pip install --upgrade pip pyinstaller
+
+      - name: Build EXE
+        shell: pwsh
+        run: >
+          pyinstaller
+          --noconfirm
+          --clean
+          --onefile
+          --windowed
+          --name MeshCore_T1000E_Latest_NoHeartbeat_Builder_v3.1
+          MeshCore_T1000E_Latest_NoHeartbeat_Builder_v3.1.pyw
+
+      - name: Verify EXE
+        shell: pwsh
+        run: |
+          $exe = "dist\MeshCore_T1000E_Latest_NoHeartbeat_Builder_v3.1.exe"
+          if (!(Test-Path $exe)) { throw "EXE was not created" }
+          Get-Item $exe | Format-List Name,Length,LastWriteTime
+          Get-FileHash $exe -Algorithm SHA256
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeshCore-T1000E-NoHeartbeat-v3.1
+          path: |
+            dist/MeshCore_T1000E_Latest_NoHeartbeat_Builder_v3.1.exe
+            MeshCore_T1000E_Latest_NoHeartbeat_Builder_v3.1.pyw
+
+      - name: Create or update Release v3.1
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "v3.1"
+          $exe = "dist\MeshCore_T1000E_Latest_NoHeartbeat_Builder_v3.1.exe"
+          $src = "MeshCore_T1000E_Latest_NoHeartbeat_Builder_v3.1.pyw"
+
+          gh release view $tag 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --target main --title "Release v3.1" --notes "MeshCore T1000-E No-Heartbeat Builder v3.1. Adds MAX_CONTACTS=500 for T1000-E Companion BLE while keeping the No-Heartbeat LED patch and automatic latest stable MeshCore source selection."
+          }
+
+          gh release upload $tag $exe $src --clobber
