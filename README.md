@@ -4,7 +4,7 @@
 [![Device](https://img.shields.io/badge/device-SenseCAP%20T1000--E-green)](https://www.seeedstudio.com/SenseCAP-Card-Tracker-T1000-E-for-LoRaWAN-p-6408.html)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
-Proste narzędzie dla **Seeed Studio SenseCAP T1000-E**, które automatycznie pobiera najnowszy stabilny **MeshCore Companion**, wyłącza regularny heartbeat zielonej diody i buduje gotowy firmware `.uf2`.
+Proste narzędzie dla **Seeed Studio SenseCAP T1000-E**, które automatycznie pobiera najnowszy stabilny **MeshCore Companion**, wyłącza regularny heartbeat zielonej diody, zwiększa limit kontaktów z 350 do **500** i buduje gotowy firmware `.uf2`.
 
 Nie trzeba ręcznie edytować `UITask.cpp`, instalować VS Code ani konfigurować projektu PlatformIO.
 
@@ -83,7 +83,7 @@ Jeżeli build się nie powiedzie, do zgłoszenia problemu najlepiej dołączyć 
 
 To jest **nieoficjalne narzędzie społecznościowe**. Projekt nie jest powiązany ani oficjalnie wspierany przez MeshCore lub Seeed Studio.
 
-Firmware jest budowany z oficjalnych źródeł MeshCore z lokalną modyfikacją logiki LED. Wgrywanie niestandardowego firmware wykonujesz na własną odpowiedzialność. Warto zachować oficjalny firmware, aby móc łatwo wrócić do wersji fabrycznej/oficjalnej.
+Firmware jest budowany z oficjalnych źródeł MeshCore z lokalną modyfikacją logiki LED oraz limitem `MAX_CONTACTS=500` dla T1000-E Companion BLE. Wgrywanie niestandardowego firmware wykonujesz na własną odpowiedzialność. Warto zachować oficjalny firmware, aby móc łatwo wrócić do wersji fabrycznej/oficjalnej.
 
 ## Podziękowania
 
