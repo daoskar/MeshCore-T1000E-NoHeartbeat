@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-MeshCore T1000-E Source Builder — No Heartbeat
+MeshCore T1000-E Source Builder — No Heartbeat + 500 Contacts
 Windows GUI
 
 Buduje własny MeshCore Companion BLE dla T1000-E z dokładnego commita:
@@ -51,7 +51,7 @@ from tkinter import filedialog, messagebox, ttk
 
 GITHUB_REPO = "meshcore-dev/MeshCore"
 GITHUB_API_RELEASES = f"https://api.github.com/repos/{GITHUB_REPO}/releases?per_page=100"
-GITHUB_USER_AGENT = "MeshCore-T1000E-Latest-NoHeartbeat-Builder/3.0"
+GITHUB_USER_AGENT = "MeshCore-T1000E-Latest-NoHeartbeat-Builder/3.1"
 
 ENV_NAME = "t1000e_companion_radio_ble"
 
@@ -378,6 +378,44 @@ def patch_one_ui_file(path: Path, mode: str, on_line) -> bool:
     return True
 
 
+def patch_max_contacts(src_dir: Path, max_contacts: int, on_line) -> Path:
+    """
+    Patch only the T1000-E Companion BLE environment.
+    This intentionally leaves repeater/room/USB targets unchanged.
+    """
+    ini_path = src_dir / "variants" / "t1000-e" / "platformio.ini"
+    if not ini_path.is_file():
+        raise BuildError(f"Brak konfiguracji T1000-E: {ini_path}")
+
+    text = ini_path.read_text(encoding="utf-8")
+    env_re = re.compile(
+        rf"(^\\[env:{re.escape(ENV_NAME)}\\]\\s*$)(.*?)(?=^\\[env:|\\Z)",
+        re.MULTILINE | re.DOTALL,
+    )
+    m = env_re.search(text)
+    if not m:
+        raise BuildError(
+            f"Nie znaleziono sekcji [env:{ENV_NAME}] w {ini_path}."
+        )
+
+    block = m.group(0)
+    patched_block, count = re.subn(
+        r"(-D\\s+MAX_CONTACTS=)\\d+",
+        rf"\\g<1>{max_contacts}",
+        block,
+        count=1,
+    )
+    if count != 1:
+        raise BuildError(
+            f"Nie znaleziono MAX_CONTACTS w sekcji [env:{ENV_NAME}]."
+        )
+
+    new_text = text[:m.start()] + patched_block + text[m.end():]
+    ini_path.write_text(new_text, encoding="utf-8", newline="\\n")
+    on_line(f"✓ MAX_CONTACTS ustawiono na {max_contacts} dla {ENV_NAME}")
+    return ini_path
+
+
 def patch_source(src_dir: Path, release: ReleaseInfo, mode: str, on_line):
     patched = []
     seen = set()
@@ -615,7 +653,7 @@ def flash_to_dfu(uf2: Path, on_line):
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("MeshCore T1000-E — Latest No-Heartbeat Builder v3.0")
+        self.title("MeshCore T1000-E — No-Heartbeat + 500 Contacts Builder v3.1")
         self.geometry("900x680")
         self.minsize(780, 580)
 
@@ -638,7 +676,7 @@ class App(tk.Tk):
 
         ttk.Label(
             f,
-            text="MeshCore T1000-E Companion BLE — NAJNOWSZY release bez heartbeat",
+            text="MeshCore T1000-E Companion BLE — No Heartbeat + 500 kontaktów",
             font=("Segoe UI", 15, "bold"),
         ).pack(anchor="w")
 
@@ -809,7 +847,7 @@ class App(tk.Tk):
                 }[mode]
 
                 final = out_dir / (
-                    f"t1000e_companion_radio_ble-{release.version_label}_{suffix}.uf2"
+                    f"t1000e_companion_radio_ble-{release.version_label}_{suffix}_contacts-{MAX_CONTACTS}.uf2"
                 )
                 shutil.copyfile(built, final)
 
